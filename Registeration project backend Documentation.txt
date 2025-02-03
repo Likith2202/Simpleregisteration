@@ -1,0 +1,205 @@
+Here's the complete documentation for every line of the code:
+
+```python
+from flask import Flask, render_template, request, redirect, flash
+import mysql.connector
+from mysql.connector import errorcode
+```
+
+- **`from flask import Flask, render_template, request, redirect, flash`**:  
+  - Importing Flask-related modules:  
+    - `Flask`: Used to create the Flask application.  
+    - `render_template`: Renders HTML templates.  
+    - `request`: Access data sent with an HTTP request (e.g., form inputs).  
+    - `redirect`: Redirect users to a different route.  
+    - `flash`: Used to display one-time messages to users.  
+
+- **`import mysql.connector`**:  
+  - Imports the MySQL Connector library to connect to a MySQL database.  
+
+- **`from mysql.connector import errorcode`**:  
+  - Imports predefined error codes from the MySQL Connector library to handle specific MySQL errors.  
+
+---
+
+```python
+app = Flask(__name__)
+app.secret_key = 'your_secret_key'
+```
+
+- **`app = Flask(__name__)`**:  
+  - Creates an instance of the Flask application. The `__name__` variable ensures the app knows its module name.
+
+- **`app.secret_key = 'your_secret_key'`**:  
+  - Sets a secret key for the application, which is required for secure sessions and using `flash` messages. Replace `'your_secret_key'` with a strong, random string.  
+
+---
+
+```python
+# Database configuration
+db_config = {
+    'user': 'root',  # Change as per your MySQL setup
+    'password': 'Likith@22',  # Change as per your MySQL setup
+    'host': 'localhost',
+    'database': 'sample_schema'
+}
+```
+
+- **`db_config`**:  
+  - A dictionary that holds the database connection parameters:  
+    - `user`: The MySQL username (replace `'root'` with your actual username).  
+    - `password`: The MySQL password (replace `'Likith@22'` with your actual password).  
+    - `host`: The server hosting the database (usually `'localhost'` for local databases).  
+    - `database`: The name of the database (`'sample_schema'` in this case).  
+
+---
+
+```python
+@app.route("/")
+def index():
+    return render_template("register.html")
+```
+
+- **`@app.route("/")`**:  
+  - Maps the root URL (`"/"`) to the `index()` function. When users visit the root URL, this function is executed.  
+
+- **`def index():`**:  
+  - Defines the `index` function to handle requests to the root URL.  
+
+- **`return render_template("register.html")`**:  
+  - Renders and returns the `register.html` template to the browser. This HTML file is expected to contain the registration form.  
+
+---
+
+```python
+@app.route("/register", methods=["POST"])
+def register():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    email = request.form.get("email")
+```
+
+- **`@app.route("/register", methods=["POST"])`**:  
+  - Maps the `/register` URL to the `register()` function. It accepts only HTTP `POST` requests (e.g., form submissions).  
+
+- **`username = request.form.get("username")`**:  
+  - Extracts the `username` input from the submitted form using the `request` object.  
+
+- **`password = request.form.get("password")`**:  
+  - Extracts the `password` input from the submitted form.  
+
+- **`email = request.form.get("email")`**:  
+  - Extracts the `email` input from the submitted form.  
+
+---
+
+```python
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+```
+
+- **`try:`**:  
+  - Begins a block of code that handles database operations. If any errors occur, they will be caught by the `except` block.  
+
+- **`conn = mysql.connector.connect(**db_config)`**:  
+  - Connects to the MySQL database using the configuration in `db_config`. The `**db_config` unpacks the dictionary into keyword arguments.  
+
+- **`cursor = conn.cursor()`**:  
+  - Creates a cursor object to interact with the database. Cursors allow executing SQL queries and fetching results.  
+
+---
+
+```python
+        query = "INSERT INTO users (username, password, email) VALUES (%s, %s, %s)"
+        cursor.execute(query, (username, password, email))
+        conn.commit()
+```
+
+- **`query = "INSERT INTO users (username, password, email) VALUES (%s, %s, %s)"`**:  
+  - Defines the SQL query to insert user data into the `users` table. The `%s` placeholders are used for parameterized queries, which prevent SQL injection.  
+
+- **`cursor.execute(query, (username, password, email))`**:  
+  - Executes the query with the provided `username`, `password`, and `email` values. These are safely substituted into the `%s` placeholders.  
+
+- **`conn.commit()`**:  
+  - Commits the transaction, saving the changes to the database.  
+
+---
+
+```python
+        flash("Registration successful!", "success")
+        return redirect("/")
+```
+
+- **`flash("Registration successful!", "success")`**:  
+  - Displays a success message to the user. The `flash` method stores this message in the session, and it will be shown on the next page load.  
+
+- **`return redirect("/")`**:  
+  - Redirects the user to the root URL (registration form) after successful registration.  
+
+---
+
+```python
+    except mysql.connector.Error as err:
+        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+            flash("Something is wrong with your username or password.", "error")
+        elif err.errno == errorcode.ER_BAD_DB_ERROR:
+            flash("Database does not exist.", "error")
+        else:
+            flash(f"Error: {err}", "error")
+```
+
+- **`except mysql.connector.Error as err:`**:  
+  - Handles any MySQL-related errors that occur in the `try` block.  
+
+- **`if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:`**:  
+  - Checks if the error is due to incorrect database credentials.  
+
+- **`elif err.errno == errorcode.ER_BAD_DB_ERROR:`**:  
+  - Checks if the error is due to a missing database.  
+
+- **`else:`**:  
+  - Handles any other MySQL errors.  
+
+- **`flash(f"Error: {err}", "error")`**:  
+  - Displays the specific error message to the user.  
+
+---
+
+```python
+    finally:
+        if 'conn' in locals():
+            conn.close()
+```
+
+- **`finally:`**:  
+  - Executes cleanup code after the `try` block, regardless of whether an error occurred.  
+
+- **`if 'conn' in locals():`**:  
+  - Checks if the `conn` variable exists (i.e., the connection was successfully created).  
+
+- **`conn.close()`**:  
+  - Closes the database connection to free up resources.  
+
+---
+
+```python
+    return redirect("/")
+```
+
+- **`return redirect("/")`**:  
+  - Redirects the user back to the registration form in case of an error.  
+
+---
+
+```python
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+- **`if __name__ == "__main__":`**:  
+  - Ensures the Flask app runs only when the script is executed directly (not imported as a module).  
+
+- **`app.run(debug=True)`**:  
+  - Starts the Flask development server with debugging enabled. Debugging mode allows for easier troubleshooting during development.  
